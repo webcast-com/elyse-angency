@@ -428,7 +428,7 @@ export default function EscortAgencyTemplate() {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href="https://wa.me/254700000000?text=Hello%2C%20I%20have%20a%20general%20inquiry%20about%20your%20services." 
+        href="https://wa.me/25470000000?text=Hello%2C%20I%20have%20a%20general%20inquiry%20about%20your%20services." 
         target="_blank" 
         rel="noopener noreferrer" 
         className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg flex items-center justify-center hover:scale-110 transform transition-all" 
