@@ -1,37 +1,53 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { MessageCircle, ArrowUp, Search, MapPin, DollarSign } from "lucide-react";
 
+interface Companion {
+  id: string;
+  name: string;
+  age: number;
+  location: string;
+  rate: number;
+  whatsapp: string;
+  services: string[];
+  img: string;
+  bio: string;
+  available: boolean;
+  featured: boolean;
+}
+
 export default function EscortAgencyTemplate() {
   const listEndRef = useRef(null);
   const [showTop, setShowTop] = useState(false);
 
-  // Create 20 deterministic sample profiles
-  const SAMPLE_PROFILES = [
-    "Ava","Lina","Maya","Zuri","Nia","Sasha","Talia","Imani","Chloe","Bella",
-    "Serena","Amara","Luna","Keira","Alina","Jade","Nora","Yara","Kira","Elena","11.jpg"
-  ].map((name, i) => ({
-    id: `p${i + 1}`,
-    name,
-    age: 22 + (i % 10),
-    location: ["Nairobi", "Mombasa", "Nakuru"][i % 3],
-    rate: 15000 + i * 1000,
-    whatsapp: `+2547${(10000000 + i * 111111) % 99999999}`,
-    services: ["Dinner Companion", "Event Dates", "Private Meetups", "Weekend Getaways"].slice(0, 2 + (i % 2)),
-    img: `https://images.pexels.com/photos/${1000000 + i * 100000}/pexels-photo-${1000000 + i * 100000}.jpeg?auto=compress&cs=tinysrgb&w=400&h=300`,
-    bio: "Elegant, professional, and here to make your experience memorable.",
-  }));
-
-  const [profiles] = useState(SAMPLE_PROFILES);
+  const [profiles, setProfiles] = useState<Companion[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [minRate, setMinRate] = useState(0);
   const [maxRate, setMaxRate] = useState(100000);
   const [ageVerified, setAgeVerified] = useState(false);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<Companion | null>(null);
   const [showBooking, setShowBooking] = useState(false);
   const [booking, setBooking] = useState({ name: "", email: "", date: "", message: "" });
   const [bookErrors, setBookErrors] = useState({});
   const [visibleCount, setVisibleCount] = useState(6);
+
+  // Load companions from JSON file
+  useEffect(() => {
+    const loadCompanions = async () => {
+      try {
+        const response = await fetch('/companions.json');
+        const data = await response.json();
+        setProfiles(data.filter((companion: Companion) => companion.available));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading companions:', error);
+        setLoading(false);
+      }
+    };
+
+    loadCompanions();
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -45,6 +61,15 @@ export default function EscortAgencyTemplate() {
       return true;
     });
   }, [profiles, query, location, minRate, maxRate]);
+
+  // Sort filtered results to show featured companions first
+  const sortedFiltered = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return 0;
+    });
+  }, [filtered]);
 
   // Smooth scroll to newly loaded profiles when visibleCount changes
   useEffect(() => {
@@ -198,15 +223,27 @@ export default function EscortAgencyTemplate() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-purple-700">Available Companions</h2>
-            <p className="text-sm text-gray-600">Showing {Math.min(visibleCount, filtered.length)} of {filtered.length}</p>
+            <p className="text-sm text-gray-600">
+              {loading ? 'Loading...' : `Showing ${Math.min(visibleCount, sortedFiltered.length)} of ${sortedFiltered.length}`}
+            </p>
           </div>
 
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+            </div>
+          ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.slice(0, visibleCount).map((p) => (
+            {sortedFiltered.slice(0, visibleCount).map((p) => (
               <article 
                 key={p.id} 
                 className="bg-white rounded-2xl shadow-lg overflow-hidden border border-pink-100 cursor-pointer hover:scale-105 hover:shadow-xl transform transition-all duration-300"
               >
+                {p.featured && (
+                  <div className="absolute top-2 left-2 z-10 bg-gradient-to-r from-yellow-400 to-pink-400 text-gray-900 px-2 py-1 rounded-full text-xs font-semibold">
+                    Featured
+                  </div>
+                )}
                 <img 
                   src={p.img} 
                   alt={p.name} 
@@ -272,8 +309,9 @@ export default function EscortAgencyTemplate() {
 
             <div ref={listEndRef}></div>
           </div>
+          )}
 
-          {visibleCount < filtered.length && (
+          {!loading && visibleCount < sortedFiltered.length && (
             <div className="flex justify-center mt-6">
               <button 
                 className="px-6 py-2 rounded-md bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow hover:scale-105 transform transition-all" 
