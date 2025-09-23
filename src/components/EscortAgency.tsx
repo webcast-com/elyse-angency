@@ -8,7 +8,7 @@ export default function EscortAgencyTemplate() {
   // Create 20 deterministic sample profiles
   const SAMPLE_PROFILES = [
     "Ava","Lina","Maya","Zuri","Nia","Sasha","Talia","Imani","Chloe","Bella",
-    "Serena","Amara","Luna","Keira","Alina","Jade","Nora","Yara","Kira","Elena"
+    "Serena","Amara","Luna","Keira","Alina","Jade","Nora","Yara","Kira","Elena","11.jpg"
   ].map((name, i) => ({
     id: `p${i + 1}`,
     name,
